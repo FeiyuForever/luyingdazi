@@ -23,13 +23,21 @@
 </template>
 
 <script>
+import { getUserInfo } from '@/api/user'
+
 export default {
   data() {
     return { inviteCode: '' }
   },
-  onLoad() {
+  async onLoad() {
     const userInfo = uni.getStorageSync('userInfo')
     this.inviteCode = userInfo?.inviteCode || ''
+    if (this.inviteCode) return
+    try {
+      const latestUserInfo = await getUserInfo()
+      this.inviteCode = latestUserInfo?.inviteCode || ''
+      uni.setStorageSync('userInfo', latestUserInfo)
+    } catch (e) {}
   },
   methods: {
     copyCode() {
