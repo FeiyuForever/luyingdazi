@@ -1,7 +1,7 @@
 <template>
   <view class="container">
     <view class="user-item card" v-for="user in list" :key="user.id" @click="goProfile(user.id)">
-      <image class="avatar" :src="user.avatar || '/static/default-avatar.png'" mode="aspectFill" />
+      <image class="avatar" :src="user.avatar || '/static/default-avatar.svg'" mode="aspectFill" />
       <view class="user-info">
         <text class="name">{{ user.nickname }}</text>
         <text class="bio">{{ user.bio || '' }}</text>

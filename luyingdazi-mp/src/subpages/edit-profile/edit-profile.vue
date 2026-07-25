@@ -3,7 +3,7 @@
     <view class="form card">
       <view class="form-item" @click="chooseAvatar">
         <text class="label">头像</text>
-        <image class="avatar-preview" :src="form.avatar || '/static/default-avatar.png'" mode="aspectFill" />
+        <image class="avatar-preview" :src="form.avatar || '/static/default-avatar.svg'" mode="aspectFill" />
       </view>
       <view class="form-item">
         <text class="label">昵称</text>

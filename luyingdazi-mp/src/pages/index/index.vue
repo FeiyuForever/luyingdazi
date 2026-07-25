@@ -14,7 +14,7 @@
         <!-- 用户信息 -->
         <view class="post-header flex-between">
           <view class="user-info" @click.stop="goProfile(item.userId)">
-            <image class="avatar" :src="item.avatar || '/static/default-avatar.png'" mode="aspectFill" />
+            <image class="avatar" :src="item.avatar || '/static/default-avatar.svg'" mode="aspectFill" />
             <view>
               <text class="nickname">{{ item.nickname || '露营新人' }}</text>
               <text class="time">{{ formatTime(item.createdAt) }}</text>

@@ -1,7 +1,7 @@
 <template>
   <view class="container">
     <view class="profile-card card" v-if="user">
-      <image class="avatar" :src="user.avatar || '/static/default-avatar.png'" mode="aspectFill" />
+      <image class="avatar" :src="user.avatar || '/static/default-avatar.svg'" mode="aspectFill" />
       <text class="nickname">{{ user.nickname }}</text>
       <text class="bio">{{ user.bio || '这个人很懒~' }}</text>
       <view class="tags" v-if="user.tags && user.tags.length">

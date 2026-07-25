@@ -18,7 +18,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -89,24 +88,9 @@ public class ActivityServiceImpl implements ActivityService {
 
     @Override
     public List<Activity> getUserActivities(Long userId, boolean created) {
-        if (created) {
-            return activityMapper.selectList(new LambdaQueryWrapper<Activity>()
-                    .eq(Activity::getUserId, userId)
-                    .orderByDesc(Activity::getCreatedAt));
-        }
-
-        List<ActivityMember> members = activityMemberMapper.selectList(
-                new LambdaQueryWrapper<ActivityMember>()
-                        .eq(ActivityMember::getUserId, userId)
-                        .eq(ActivityMember::getStatus, 1)
-                        .orderByDesc(ActivityMember::getJoinedAt));
-        if (members.isEmpty()) {
-            return Collections.emptyList();
-        }
-        List<Long> activityIds = members.stream().map(ActivityMember::getActivityId).toList();
-        return activityMapper.selectList(new LambdaQueryWrapper<Activity>()
-                .in(Activity::getId, activityIds)
-                .orderByDesc(Activity::getCreatedAt));
+        return created
+                ? activityMapper.selectCreatedByUserId(userId)
+                : activityMapper.selectJoinedByUserId(userId);
     }
 
     @Override

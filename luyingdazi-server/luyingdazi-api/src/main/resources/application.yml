@@ -21,6 +21,12 @@ spring:
     time-zone: GMT+8
     default-property-inclusion: non_null
 
+  # 对已有生产库执行幂等增量建表，避免代码已部署但新功能数据表缺失。
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:db/migration.sql
+
 # MyBatis Plus
 mybatis-plus:
   mapper-locations: classpath*:mapper/**/*.xml

@@ -3,7 +3,7 @@
     <view class="card" v-if="post">
       <!-- 动态内容 -->
       <view class="user-info" @click="goProfile(post.userId)">
-        <image class="avatar" :src="post.avatar || '/static/default-avatar.png'" mode="aspectFill" />
+        <image class="avatar" :src="post.avatar || '/static/default-avatar.svg'" mode="aspectFill" />
         <view>
           <text class="nickname">{{ post.nickname || '露营新人' }}</text>
           <text class="time">{{ formatTime(post.createdAt) }}</text>
@@ -34,7 +34,7 @@
 
       <view class="comment-list">
         <view class="comment-item" v-for="c in comments" :key="c.id">
-          <image class="comment-avatar" :src="c.avatar || '/static/default-avatar.png'" mode="aspectFill" />
+          <image class="comment-avatar" :src="c.avatar || '/static/default-avatar.svg'" mode="aspectFill" />
           <view class="comment-body">
             <text class="comment-name">{{ c.nickname }}</text>
             <text class="comment-content">{{ c.content }}</text>

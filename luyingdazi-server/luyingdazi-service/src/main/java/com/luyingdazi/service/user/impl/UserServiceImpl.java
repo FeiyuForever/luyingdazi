@@ -90,6 +90,7 @@ public class UserServiceImpl implements UserService {
             log.info("新用户注册: userId={}, openid={}", user.getId(), openid);
         } else {
             // 老用户更新登录时间
+            ensureInviteCode(user);
             userMapper.update(null, new LambdaUpdateWrapper<User>()
                     .eq(User::getId, user.getId())
                     .set(User::getLastLoginTime, LocalDateTime.now()));
@@ -118,6 +119,7 @@ public class UserServiceImpl implements UserService {
         if (user == null) {
             throw new BizException(ResultCode.USER_NOT_FOUND);
         }
+        ensureInviteCode(user);
         return buildUserVO(user);
     }
 
@@ -238,6 +240,18 @@ public class UserServiceImpl implements UserService {
      */
     private String generateInviteCode() {
         return IdUtil.nanoId(6).toUpperCase();
+    }
+
+    /** 为功能上线前注册的老用户补齐邀请码。 */
+    private void ensureInviteCode(User user) {
+        if (StrUtil.isNotBlank(user.getInviteCode())) {
+            return;
+        }
+        String inviteCode = generateInviteCode();
+        userMapper.update(null, new LambdaUpdateWrapper<User>()
+                .eq(User::getId, user.getId())
+                .set(User::getInviteCode, inviteCode));
+        user.setInviteCode(inviteCode);
     }
 
     /**

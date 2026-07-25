@@ -34,17 +34,15 @@ export default {
   computed: {
     displayList() { return this.tabIdx === 0 ? this.joinedList : this.createdList }
   },
-  onLoad() { this.loadData() },
+  onShow() { this.loadData() },
   methods: {
     async loadData() {
-      try {
-        const [joined, created] = await Promise.all([
-          getMyActivities('joined'),
-          getMyActivities('created')
-        ])
-        this.joinedList = joined || []
-        this.createdList = created || []
-      } catch (e) {}
+      getMyActivities('joined')
+        .then(list => { this.joinedList = list || [] })
+        .catch(() => { this.joinedList = [] })
+      getMyActivities('created')
+        .then(list => { this.createdList = list || [] })
+        .catch(() => { this.createdList = [] })
     },
     goDetail(id) { uni.navigateTo({ url: `/subpages/activity-detail/activity-detail?id=${id}` }) },
     statusText(s) { return { 1: '报名中', 2: '已满', 3: '进行中', 4: '已结束', 0: '已取消' }[s] || '' }

@@ -21,7 +21,7 @@
     <view class="user-grid">
       <view class="user-card card" v-for="user in nearbyUsers" :key="user.id"
             @click="goProfile(user.id)">
-        <image class="user-avatar" :src="user.avatar || '/static/default-avatar.png'" mode="aspectFill" />
+        <image class="user-avatar" :src="user.avatar || '/static/default-avatar.svg'" mode="aspectFill" />
         <text class="user-name ellipsis">{{ user.nickname }}</text>
         <text class="user-distance">{{ formatDistance(user.distance) }}</text>
         <view class="user-tags">

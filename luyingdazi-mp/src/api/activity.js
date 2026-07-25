@@ -12,7 +12,9 @@ export function getActivityDetail(activityId) {
 
 /** 活动列表 */
 export function getActivityList(pageNum, pageSize, city) {
-  return get('/api/activity/list', { pageNum, pageSize, city })
+  const params = { pageNum, pageSize }
+  if (city) params.city = city
+  return get('/api/activity/list', params)
 }
 
 /** 当前用户参加或发起的活动 */

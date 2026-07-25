@@ -1,14 +1,19 @@
 package com.luyingdazi.api.service;
 
 import com.aliyun.oss.OSS;
+import com.aliyun.oss.OSSClientBuilder;
 import com.luyingdazi.api.config.OssConfig;
+import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.net.URLDecoder;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 把数据库中保存的 OSS 永久地址转换为短期签名地址。
@@ -23,29 +28,47 @@ public class OssUrlService {
 
     private final OSS ossClient;
     private final OssConfig ossConfig;
+    private final Map<String, OSS> regionalClients = new ConcurrentHashMap<>();
 
     public String toAccessibleUrl(String url) {
         if (url == null || url.isBlank()) {
             return url;
         }
 
-        String prefix = ossConfig.getUrlPrefix();
-        if (!url.startsWith(prefix)) {
+        URI uri;
+        try {
+            uri = URI.create(url);
+        } catch (IllegalArgumentException exception) {
             return url;
         }
 
-        String objectKey = url.substring(prefix.length());
-        int queryIndex = objectKey.indexOf('?');
-        if (queryIndex >= 0) {
-            objectKey = objectKey.substring(0, queryIndex);
+        String host = uri.getHost();
+        String expectedHostPrefix = ossConfig.getBucketName() + ".";
+        if (host == null || !host.startsWith(expectedHostPrefix)
+                || !host.endsWith(".aliyuncs.com")) {
+            return url;
         }
-        objectKey = URLDecoder.decode(objectKey, StandardCharsets.UTF_8);
+
+        String objectKey = uri.getRawPath();
+        if (objectKey != null && objectKey.startsWith("/")) {
+            objectKey = objectKey.substring(1);
+        }
+        objectKey = URLDecoder.decode(objectKey == null ? "" : objectKey,
+                StandardCharsets.UTF_8);
         if (objectKey.isBlank()) {
             return url;
         }
 
         Date expiration = new Date(System.currentTimeMillis() + URL_TTL_MILLIS);
-        return ossClient.generatePresignedUrl(
+        String sourceEndpoint = host.substring(expectedHostPrefix.length());
+        OSS signingClient = sourceEndpoint.equals(ossConfig.getEndpoint())
+                ? ossClient
+                : regionalClients.computeIfAbsent(sourceEndpoint,
+                        endpoint -> new OSSClientBuilder().build(
+                                endpoint,
+                                ossConfig.getAccessKeyId(),
+                                ossConfig.getAccessKeySecret()));
+        return signingClient.generatePresignedUrl(
                 ossConfig.getBucketName(), objectKey, expiration).toString();
     }
 
@@ -54,5 +77,10 @@ public class OssUrlService {
             return urls;
         }
         return urls.stream().map(this::toAccessibleUrl).toList();
+    }
+
+    @PreDestroy
+    void closeRegionalClients() {
+        regionalClients.values().forEach(OSS::shutdown);
     }
 }

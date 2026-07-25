@@ -22,7 +22,7 @@ import { getFavorites } from '@/api/favorite'
 
 export default {
   data() { return { list: [], loading: false } },
-  onLoad() {
+  onShow() {
     this.loadData()
   },
   methods: {

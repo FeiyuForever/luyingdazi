@@ -3,7 +3,7 @@
     <view class="session-list">
       <view class="session-item card" v-for="item in sessionList" :key="item.sessionId"
             @click="goChat(item)">
-        <image class="avatar" :src="item.targetAvatar || '/static/default-avatar.png'" mode="aspectFill" />
+        <image class="avatar" :src="item.targetAvatar || '/static/default-avatar.svg'" mode="aspectFill" />
         <view class="session-info">
           <view class="flex-between">
             <text class="name ellipsis">{{ item.targetNickname }}</text>

@@ -47,8 +47,8 @@ export default {
       noMore: false
     }
   },
-  onLoad() {
-    this.loadActivities()
+  onShow() {
+    this.refreshActivities()
   },
   onReachBottom() {
     if (!this.noMore) this.loadActivities()
@@ -60,6 +60,12 @@ export default {
     this.loadActivities().then(() => uni.stopPullDownRefresh())
   },
   methods: {
+    refreshActivities() {
+      this.pageNum = 1
+      this.activityList = []
+      this.noMore = false
+      return this.loadActivities()
+    },
     async loadActivities() {
       if (this.loading || this.noMore) return
       this.loading = true

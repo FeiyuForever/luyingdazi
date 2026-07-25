@@ -12,7 +12,7 @@
     <!-- 已登录用户信息 -->
     <view class="profile-card card" v-else>
       <view class="profile-header" @click="goEditProfile">
-        <image class="avatar" :src="userInfo.avatar || '/static/default-avatar.png'" mode="aspectFill" />
+        <image class="avatar" :src="userInfo.avatar || '/static/default-avatar.svg'" mode="aspectFill" />
         <view class="profile-info">
           <text class="nickname">{{ userInfo.nickname }}</text>
           <text class="bio">{{ userInfo.bio || '这个人很懒，什么都没写~' }}</text>

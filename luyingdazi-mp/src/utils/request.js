@@ -10,11 +10,15 @@ const BASE_URL = 'https://api.luyingdazi.xyz' // 生产环境
 function request(options) {
   return new Promise((resolve, reject) => {
     const token = uni.getStorageSync('token')
+    const requestData = {}
+    Object.keys(options.data || {}).forEach((key) => {
+      if (options.data[key] !== undefined) requestData[key] = options.data[key]
+    })
     
     uni.request({
       url: BASE_URL + options.url,
       method: options.method || 'GET',
-      data: options.data,
+      data: requestData,
       header: {
         'Content-Type': 'application/json',
         'Authorization': token ? `Bearer ${token}` : '',
