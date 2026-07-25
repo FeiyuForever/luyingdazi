@@ -83,7 +83,14 @@ export default {
     }
   },
   onLoad() {
-    this.loadPosts()
+    // 首次加载
+  },
+  onShow() {
+    // 每次显示时刷新（从详情页返回后刷新数据）
+    const token = uni.getStorageSync('token')
+    if (token && this.postList.length === 0) {
+      this.loadPosts()
+    }
   },
   onReachBottom() {
     if (!this.noMore) this.loadPosts()
@@ -113,10 +120,15 @@ export default {
       this.loading = false
     },
     async handleLike(item) {
+      const token = uni.getStorageSync('token')
+      if (!token) {
+        uni.showToast({ title: '请先登录', icon: 'none' })
+        return
+      }
       try {
         const liked = await toggleLike(item.id)
         item.liked = liked
-        item.likeCount += liked ? 1 : -1
+        item.likeCount = Math.max(0, (item.likeCount || 0) + (liked ? 1 : -1))
       } catch (e) {}
     },
     goDetail(id) {
@@ -126,6 +138,12 @@ export default {
       uni.navigateTo({ url: `/subpages/user-profile/user-profile?id=${userId}` })
     },
     goPublish() {
+      const token = uni.getStorageSync('token')
+      if (!token) {
+        uni.showToast({ title: '请先登录', icon: 'none' })
+        setTimeout(() => uni.switchTab({ url: '/pages/mine/mine' }), 1500)
+        return
+      }
       uni.navigateTo({ url: '/subpages/post-publish/post-publish' })
     },
     goSearch() {

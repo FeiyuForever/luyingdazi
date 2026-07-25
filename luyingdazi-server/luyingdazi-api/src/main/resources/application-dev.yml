@@ -2,7 +2,7 @@ spring:
   datasource:
     url: jdbc:mysql://localhost:3306/luyingdazi?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
     username: root
-    password: root123
+    password: ${DB_PASSWORD:root123}
     driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
       minimum-idle: 5
@@ -26,17 +26,17 @@ spring:
 
 wx:
   miniapp:
-    app-id: your_app_id
-    app-secret: your_app_secret
+    app-id: ${WX_APP_ID:your_app_id}
+    app-secret: ${WX_APP_SECRET:your_app_secret}
 
 aliyun:
   oss:
-    endpoint: oss-cn-shanghai.aliyuncs.com
-    access-key-id: your_access_key_id
-    access-key-secret: your_access_key_secret
-    bucket-name: your_bucket_name
+    endpoint: oss-cn-beijing.aliyuncs.com
+    access-key-id: ${OSS_AK_ID:your_ak_id}
+    access-key-secret: ${OSS_AK_SECRET:your_ak_secret}
+    bucket-name: luyingdazi
 
 app:
   token:
-    secret: luyingdazi_jwt_secret_key_2024_change_in_prod
+    secret: ${TOKEN_SECRET:luyingdazi_dev_secret_key}
     expire-seconds: 604800

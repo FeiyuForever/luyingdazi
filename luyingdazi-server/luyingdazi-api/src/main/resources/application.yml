@@ -9,6 +9,12 @@ spring:
   profiles:
     active: dev
 
+  # 文件上传大小限制
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 50MB
+
   # Jackson 配置
   jackson:
     date-format: yyyy-MM-dd HH:mm:ss

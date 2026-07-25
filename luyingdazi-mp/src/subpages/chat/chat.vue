@@ -53,6 +53,11 @@ export default {
   },
   methods: {
     async loadMessages() {
+      if (!this.sessionId || this.sessionId === 'undefined') {
+        // 首次私信，还没有会话，显示空列表
+        this.messages = []
+        return
+      }
       try {
         const res = await getMessages(this.sessionId, this.pageNum, 30)
         if (res && res.list) {

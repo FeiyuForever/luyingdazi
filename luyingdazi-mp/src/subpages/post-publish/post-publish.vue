@@ -31,6 +31,7 @@
 
 <script>
 import { publishPost } from '@/api/post'
+import { uploadImages } from '@/api/upload'
 
 export default {
   data() {
@@ -75,10 +76,18 @@ export default {
 
       uni.showLoading({ title: '发布中...' })
       try {
-        // TODO: 实际需要先把图片上传到 OSS，获得 URL 数组
+        // 先上传图片到 OSS
+        let imageUrls = []
+        if (this.images.length > 0) {
+          uni.showLoading({ title: '上传图片...' })
+          imageUrls = await uploadImages(this.images)
+        }
+
+        // 发布动态
+        uni.showLoading({ title: '发布中...' })
         await publishPost({
           content: this.content,
-          images: this.images,
+          images: imageUrls,
           locationName: this.locationName,
           longitude: this.longitude,
           latitude: this.latitude

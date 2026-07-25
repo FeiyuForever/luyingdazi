@@ -83,6 +83,7 @@ export default {
   methods: {
     async loadDetail(id) {
       this.post = await getPostDetail(id)
+      this.liked = this.post.liked || false
     },
     async loadComments(postId) {
       try {
@@ -93,7 +94,7 @@ export default {
     async handleLike() {
       const result = await toggleLike(this.post.id)
       this.liked = result
-      this.post.likeCount += result ? 1 : -1
+      this.post.likeCount = Math.max(0, (this.post.likeCount || 0) + (result ? 1 : -1))
     },
     replyTo(comment) {
       this.replyTarget = comment

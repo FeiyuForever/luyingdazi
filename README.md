@@ -2,6 +2,16 @@
 
 > 一款专为露营爱好者打造的微信小程序社交平台，帮助用户找到志同道合的露营搭子，组队出行，分享户外生活。
 
+James#22108
+Luyingdazi@2026
+
+
+数据码  2d1b30c675e9b25d7ef8151bd7c5c8a0  （有效截止日期：2026-08-23 16:36:38）
+
+健康检查：https://api.luyingdazi.xyz/actuator/health
+登录接口：https://api.luyingdazi.xyz/api/user/wx-login
+
+
 ---
 
 ## 一、项目概述

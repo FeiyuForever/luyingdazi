@@ -2,7 +2,7 @@
  * HTTP 请求封装
  */
 
-const BASE_URL = 'http://localhost:8080' // 开发环境，上线后改为真实域名
+const BASE_URL = 'https://api.luyingdazi.xyz' // 生产环境
 
 /**
  * 统一请求方法

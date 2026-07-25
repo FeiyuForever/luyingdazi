@@ -37,7 +37,7 @@
     </view>
 
     <!-- 用户动态列表 -->
-    <view class="section-title" v-if="posts.length">TA的动态</view>
+    <view class="section-title" v-if="posts.length">{{ isSelf ? '我的动态' : 'TA的动态' }}</view>
     <view class="post-card card" v-for="p in posts" :key="p.id" @click="goPostDetail(p.id)">
       <text class="post-content">{{ p.content }}</text>
       <view class="post-meta">
