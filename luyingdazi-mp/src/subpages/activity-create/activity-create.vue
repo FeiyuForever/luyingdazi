@@ -13,14 +13,30 @@
         <text class="label">活动地点</text>
         <text class="value">{{ form.locationName || '点击选择位置' }}</text>
       </view>
-      <view class="form-item" @click="pickStartTime">
-        <text class="label">开始时间</text>
-        <text class="value">{{ form.startTime || '选择时间' }}</text>
-      </view>
-      <view class="form-item" @click="pickEndTime">
-        <text class="label">结束时间</text>
-        <text class="value">{{ form.endTime || '选择时间' }}</text>
-      </view>
+      <picker mode="date" :start="today" :value="startDate" @change="onStartDateChange">
+        <view class="form-item">
+          <text class="label">开始日期</text>
+          <text class="value">{{ startDate || '选择日期' }}</text>
+        </view>
+      </picker>
+      <picker mode="time" :value="startClock" @change="onStartClockChange">
+        <view class="form-item">
+          <text class="label">开始时间</text>
+          <text class="value">{{ startClock || '选择时间' }}</text>
+        </view>
+      </picker>
+      <picker mode="date" :start="startDate || today" :value="endDate" @change="onEndDateChange">
+        <view class="form-item">
+          <text class="label">结束日期</text>
+          <text class="value">{{ endDate || '选择日期' }}</text>
+        </view>
+      </picker>
+      <picker mode="time" :value="endClock" @change="onEndClockChange">
+        <view class="form-item">
+          <text class="label">结束时间</text>
+          <text class="value">{{ endClock || '选择时间' }}</text>
+        </view>
+      </picker>
       <view class="form-item">
         <text class="label">人数上限（0为不限）</text>
         <input v-model="form.maxMembers" type="number" placeholder="0" />
@@ -44,8 +60,17 @@ import { createActivity } from '@/api/activity'
 export default {
   data() {
     return {
-      form: { title: '', description: '', locationName: '', longitude: null, latitude: null, startTime: '', endTime: '', maxMembers: 0, feeDesc: '免费', requirement: '' }
+      form: { title: '', description: '', locationName: '', longitude: null, latitude: null, startTime: '', endTime: '', maxMembers: 0, feeDesc: '免费', requirement: '' },
+      today: '',
+      startDate: '',
+      startClock: '',
+      endDate: '',
+      endClock: ''
     }
+  },
+  onLoad() {
+    const now = new Date()
+    this.today = this.formatDate(now)
   },
   methods: {
     chooseLocation() {
@@ -57,16 +82,44 @@ export default {
         }
       })
     },
-    pickStartTime() {
-      uni.showToast({ title: '请使用日期选择器', icon: 'none' })
-      // 简化：实际用 uni-datetime-picker 组件
+    onStartDateChange(e) {
+      this.startDate = e.detail.value
+      if (this.endDate && this.endDate < this.startDate) this.endDate = this.startDate
+      this.syncTimes()
     },
-    pickEndTime() {
-      uni.showToast({ title: '请使用日期选择器', icon: 'none' })
+    onStartClockChange(e) {
+      this.startClock = e.detail.value
+      this.syncTimes()
+    },
+    onEndDateChange(e) {
+      this.endDate = e.detail.value
+      this.syncTimes()
+    },
+    onEndClockChange(e) {
+      this.endClock = e.detail.value
+      this.syncTimes()
+    },
+    syncTimes() {
+      this.form.startTime = this.startDate && this.startClock
+        ? `${this.startDate}T${this.startClock}:00`
+        : ''
+      this.form.endTime = this.endDate && this.endClock
+        ? `${this.endDate}T${this.endClock}:00`
+        : ''
+    },
+    formatDate(date) {
+      const pad = (n) => String(n).padStart(2, '0')
+      return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
     },
     async handleSubmit() {
       if (!this.form.title) return uni.showToast({ title: '请填写标题', icon: 'none' })
       if (!this.form.locationName) return uni.showToast({ title: '请选择地点', icon: 'none' })
+      if (!this.form.startTime || !this.form.endTime) {
+        return uni.showToast({ title: '请选择完整的开始和结束时间', icon: 'none' })
+      }
+      if (new Date(this.form.endTime) <= new Date(this.form.startTime)) {
+        return uni.showToast({ title: '结束时间必须晚于开始时间', icon: 'none' })
+      }
 
       uni.showLoading({ title: '发布中...' })
       try {

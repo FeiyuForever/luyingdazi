@@ -1,5 +1,6 @@
 package com.luyingdazi.api.controller;
 
+import com.luyingdazi.api.service.OssUrlService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.luyingdazi.common.exception.BizException;
@@ -34,6 +35,7 @@ public class CommentController {
     private final PostMapper postMapper;
     private final UserMapper userMapper;
     private final ContentSecurityService contentSecurityService;
+    private final OssUrlService ossUrlService;
 
     /**
      * 获取动态的评论列表
@@ -69,7 +71,7 @@ public class CommentController {
             User u = userMap.get(c.getUserId());
             if (u != null) {
                 map.put("nickname", u.getNickname());
-                map.put("avatar", u.getAvatar());
+                map.put("avatar", ossUrlService.toAccessibleUrl(u.getAvatar()));
             }
             return map;
         }).collect(Collectors.toList());

@@ -22,6 +22,9 @@
         <view class="action-item">
           <text>💬 {{ post.commentCount }}</text>
         </view>
+        <view class="action-item" @click="handleFavorite">
+          <text>{{ favorited ? '⭐ 已收藏' : '☆ 收藏' }}</text>
+        </view>
       </view>
     </view>
 
@@ -59,6 +62,7 @@
 
 <script>
 import { getPostDetail, toggleLike } from '@/api/post'
+import { checkFavorite, toggleFavorite } from '@/api/favorite'
 import { get, post } from '@/utils/request'
 
 export default {
@@ -66,6 +70,7 @@ export default {
     return {
       post: null,
       liked: false,
+      favorited: false,
       comments: [],
       inputText: '',
       replyTarget: null
@@ -84,6 +89,11 @@ export default {
     async loadDetail(id) {
       this.post = await getPostDetail(id)
       this.liked = this.post.liked || false
+      try {
+        this.favorited = await checkFavorite(id)
+      } catch (e) {
+        this.favorited = false
+      }
     },
     async loadComments(postId) {
       try {
@@ -95,6 +105,13 @@ export default {
       const result = await toggleLike(this.post.id)
       this.liked = result
       this.post.likeCount = Math.max(0, (this.post.likeCount || 0) + (result ? 1 : -1))
+    },
+    async handleFavorite() {
+      this.favorited = await toggleFavorite(this.post.id)
+      uni.showToast({
+        title: this.favorited ? '已收藏' : '已取消收藏',
+        icon: 'success'
+      })
     },
     replyTo(comment) {
       this.replyTarget = comment

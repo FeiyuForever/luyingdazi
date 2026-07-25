@@ -91,6 +91,7 @@ public class UploadController {
             InputStream inputStream = file.getInputStream();
             ossClient.putObject(ossConfig.getBucketName(), objectKey, inputStream);
 
+            // 数据库存永久地址；读取接口会按需生成短期签名 URL。
             String url = ossConfig.getUrlPrefix() + objectKey;
             log.info("用户{}上传图片: {}", UserContext.getUserId(), url);
             return url;

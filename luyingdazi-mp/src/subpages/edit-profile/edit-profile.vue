@@ -45,6 +45,7 @@
 
 <script>
 import { updateProfile } from '@/api/user'
+import { uploadImage } from '@/api/upload'
 
 export default {
   data() {
@@ -79,6 +80,9 @@ export default {
       if (!this.form.nickname) return uni.showToast({ title: '请填写昵称', icon: 'none' })
       uni.showLoading({ title: '保存中...' })
       try {
+        if (this.form.avatar && !/^https?:\/\//.test(this.form.avatar)) {
+          this.form.avatar = await uploadImage(this.form.avatar)
+        }
         await updateProfile({ ...this.form, tags: this.selectedTags })
         uni.setStorageSync('userInfo', { ...this.form, tags: this.selectedTags })
         uni.hideLoading()

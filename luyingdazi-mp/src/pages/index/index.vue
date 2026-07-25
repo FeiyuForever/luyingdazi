@@ -43,11 +43,11 @@
           <view class="action-item" @click.stop="handleLike(item)">
             <text :class="{ 'liked': item.liked }">{{ item.liked ? '❤️' : '🩶' }} {{ item.likeCount || 0 }}</text>
           </view>
-          <view class="action-item">
+          <view class="action-item" @click.stop="goDetail(item.id)">
             <text>💬 {{ item.commentCount || 0 }}</text>
           </view>
           <view class="action-item">
-            <text>🔗 分享</text>
+            <button class="share-btn" open-type="share" :data-post="item" @click.stop>🔗 分享</button>
           </view>
         </view>
       </view>
@@ -61,8 +61,10 @@
       </view>
     </view>
 
-    <!-- 发布按钮 -->
-    <view class="fab-btn" @click="goPublish">
+    <!-- 可拖动发布按钮 -->
+    <view class="fab-btn" :style="{ left: fabX + 'px', top: fabY + 'px' }"
+          @touchstart="startFabDrag" @touchmove.stop.prevent="moveFab"
+          @touchend="endFabDrag" @click="goPublish">
       <text>+</text>
     </view>
   </view>
@@ -79,7 +81,14 @@ export default {
       pageSize: 10,
       loading: false,
       noMore: false,
-      searchKeyword: ''
+      searchKeyword: '',
+      fabX: 280,
+      fabY: 500,
+      fabMoved: false,
+      fabStartX: 0,
+      fabStartY: 0,
+      fabOriginX: 0,
+      fabOriginY: 0
     }
   },
   onLoad() {
@@ -90,6 +99,27 @@ export default {
     const token = uni.getStorageSync('token')
     if (token && this.postList.length === 0) {
       this.loadPosts()
+    }
+  },
+  onShareAppMessage(res) {
+    // 分享给朋友
+    const post = res.target?.dataset?.post
+    if (post) {
+      return {
+        title: post.content ? post.content.substring(0, 30) : '来野趣搭子找露营搭子',
+        path: `/subpages/post-detail/post-detail?id=${post.id}`
+      }
+    }
+    return {
+      title: '野趣搭子 - 找到你的露营搭子',
+      path: '/pages/index/index'
+    }
+  },
+  onShareTimeline() {
+    // 分享到朋友圈
+    return {
+      title: '野趣搭子 - 户外露营社交平台',
+      path: '/pages/index/index'
     }
   },
   onReachBottom() {
@@ -138,6 +168,10 @@ export default {
       uni.navigateTo({ url: `/subpages/user-profile/user-profile?id=${userId}` })
     },
     goPublish() {
+      if (this.fabMoved) {
+        this.fabMoved = false
+        return
+      }
       const token = uni.getStorageSync('token')
       if (!token) {
         uni.showToast({ title: '请先登录', icon: 'none' })
@@ -145,6 +179,27 @@ export default {
         return
       }
       uni.navigateTo({ url: '/subpages/post-publish/post-publish' })
+    },
+    startFabDrag(e) {
+      const touch = e.touches[0]
+      this.fabMoved = false
+      this.fabStartX = touch.clientX
+      this.fabStartY = touch.clientY
+      this.fabOriginX = this.fabX
+      this.fabOriginY = this.fabY
+    },
+    moveFab(e) {
+      const touch = e.touches[0]
+      const dx = touch.clientX - this.fabStartX
+      const dy = touch.clientY - this.fabStartY
+      if (Math.abs(dx) > 4 || Math.abs(dy) > 4) this.fabMoved = true
+      const system = uni.getSystemInfoSync()
+      const buttonSize = 50
+      this.fabX = Math.max(0, Math.min(system.windowWidth - buttonSize, this.fabOriginX + dx))
+      this.fabY = Math.max(0, Math.min(system.windowHeight - buttonSize - 50, this.fabOriginY + dy))
+    },
+    endFabDrag() {
+      // click 会在 touchend 后触发，保留 fabMoved 供 goPublish 判断。
     },
     goSearch() {
       uni.switchTab({ url: '/pages/discover/discover' })
@@ -211,10 +266,18 @@ export default {
 .load-more { text-align: center; padding: 30rpx; color: #999; font-size: 24rpx; }
 
 .fab-btn {
-  position: fixed; right: 40rpx; bottom: 180rpx;
+  position: fixed;
   width: 100rpx; height: 100rpx; border-radius: 50%;
   background: #2b9939; color: #fff; font-size: 48rpx;
   display: flex; align-items: center; justify-content: center;
   box-shadow: 0 4rpx 16rpx rgba(43,153,57,0.4);
+  z-index: 999;
 }
+
+.share-btn {
+  background: none; border: none; padding: 0; margin: 0;
+  font-size: 24rpx; color: #666; line-height: normal;
+  display: inline; min-height: auto;
+}
+.share-btn::after { border: none; }
 </style>

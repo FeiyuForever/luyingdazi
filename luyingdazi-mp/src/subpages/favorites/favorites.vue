@@ -18,12 +18,25 @@
 </template>
 
 <script>
+import { getFavorites } from '@/api/favorite'
+
 export default {
-  data() { return { list: [] } },
+  data() { return { list: [], loading: false } },
   onLoad() {
-    // TODO: 接入收藏接口
+    this.loadData()
   },
   methods: {
+    async loadData() {
+      this.loading = true
+      try {
+        const res = await getFavorites()
+        this.list = res?.list || []
+      } catch (e) {
+        this.list = []
+      } finally {
+        this.loading = false
+      }
+    },
     goDetail(id) { uni.navigateTo({ url: `/subpages/post-detail/post-detail?id=${id}` }) }
   }
 }

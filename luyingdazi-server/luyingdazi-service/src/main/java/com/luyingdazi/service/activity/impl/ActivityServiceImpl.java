@@ -17,6 +17,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.List;
+
 /**
  * 活动服务实现
  *
@@ -33,6 +37,17 @@ public class ActivityServiceImpl implements ActivityService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Long createActivity(Long userId, Activity activity) {
+        if (StrUtil.isBlank(activity.getTitle()) || StrUtil.isBlank(activity.getLocationName())
+                || activity.getStartTime() == null || activity.getEndTime() == null) {
+            throw new BizException(ResultCode.PARAM_MISSING);
+        }
+        if (!activity.getEndTime().isAfter(activity.getStartTime())
+                || activity.getStartTime().isBefore(LocalDateTime.now())) {
+            throw new BizException("活动时间不正确");
+        }
+        if (activity.getMaxMembers() == null || activity.getMaxMembers() < 0) {
+            activity.setMaxMembers(0);
+        }
         activity.setUserId(userId);
         activity.setCurrentMembers(1);
         activity.setStatus(1);
@@ -73,6 +88,36 @@ public class ActivityServiceImpl implements ActivityService {
     }
 
     @Override
+    public List<Activity> getUserActivities(Long userId, boolean created) {
+        if (created) {
+            return activityMapper.selectList(new LambdaQueryWrapper<Activity>()
+                    .eq(Activity::getUserId, userId)
+                    .orderByDesc(Activity::getCreatedAt));
+        }
+
+        List<ActivityMember> members = activityMemberMapper.selectList(
+                new LambdaQueryWrapper<ActivityMember>()
+                        .eq(ActivityMember::getUserId, userId)
+                        .eq(ActivityMember::getStatus, 1)
+                        .orderByDesc(ActivityMember::getJoinedAt));
+        if (members.isEmpty()) {
+            return Collections.emptyList();
+        }
+        List<Long> activityIds = members.stream().map(ActivityMember::getActivityId).toList();
+        return activityMapper.selectList(new LambdaQueryWrapper<Activity>()
+                .in(Activity::getId, activityIds)
+                .orderByDesc(Activity::getCreatedAt));
+    }
+
+    @Override
+    public boolean isJoined(Long userId, Long activityId) {
+        return activityMemberMapper.selectCount(new LambdaQueryWrapper<ActivityMember>()
+                .eq(ActivityMember::getActivityId, activityId)
+                .eq(ActivityMember::getUserId, userId)
+                .eq(ActivityMember::getStatus, 1)) > 0;
+    }
+
+    @Override
     @Transactional(rollbackFor = Exception.class)
     public void joinActivity(Long userId, Long activityId) {
         Activity activity = activityMapper.selectById(activityId);
@@ -86,22 +131,27 @@ public class ActivityServiceImpl implements ActivityService {
             throw new BizException(ResultCode.ACTIVITY_FULL);
         }
 
-        // 检查是否已报名
-        Long count = activityMemberMapper.selectCount(new LambdaQueryWrapper<ActivityMember>()
+        // 检查是否已有报名记录。取消后再次报名时复用旧记录，避免唯一键冲突。
+        ActivityMember existing = activityMemberMapper.selectOne(new LambdaQueryWrapper<ActivityMember>()
                 .eq(ActivityMember::getActivityId, activityId)
-                .eq(ActivityMember::getUserId, userId)
-                .eq(ActivityMember::getStatus, 1));
-        if (count > 0) {
+                .eq(ActivityMember::getUserId, userId));
+        if (existing != null && existing.getStatus() == 1) {
             throw new BizException(ResultCode.ALREADY_JOINED);
         }
 
-        // 报名
-        ActivityMember member = new ActivityMember();
-        member.setActivityId(activityId);
-        member.setUserId(userId);
-        member.setRole(2); // 参与者
-        member.setStatus(1);
-        activityMemberMapper.insert(member);
+        if (existing != null) {
+            existing.setStatus(1);
+            existing.setRole(2);
+            existing.setJoinedAt(LocalDateTime.now());
+            activityMemberMapper.updateById(existing);
+        } else {
+            ActivityMember member = new ActivityMember();
+            member.setActivityId(activityId);
+            member.setUserId(userId);
+            member.setRole(2); // 参与者
+            member.setStatus(1);
+            activityMemberMapper.insert(member);
+        }
 
         // 更新人数
         activityMapper.update(null, new LambdaUpdateWrapper<Activity>()
@@ -119,16 +169,26 @@ public class ActivityServiceImpl implements ActivityService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void quitActivity(Long userId, Long activityId) {
-        activityMemberMapper.update(null, new LambdaUpdateWrapper<ActivityMember>()
+        int affected = activityMemberMapper.update(null, new LambdaUpdateWrapper<ActivityMember>()
                 .eq(ActivityMember::getActivityId, activityId)
                 .eq(ActivityMember::getUserId, userId)
                 .eq(ActivityMember::getRole, 2) // 只有参与者能退出
+                .eq(ActivityMember::getStatus, 1)
                 .set(ActivityMember::getStatus, 0));
+        if (affected == 0) {
+            throw new BizException("您尚未报名该活动");
+        }
 
         activityMapper.update(null, new LambdaUpdateWrapper<Activity>()
                 .eq(Activity::getId, activityId)
                 .gt(Activity::getCurrentMembers, 0)
                 .setSql("current_members = current_members - 1"));
+
+        // 满员活动有人退出后恢复为可报名。
+        activityMapper.update(null, new LambdaUpdateWrapper<Activity>()
+                .eq(Activity::getId, activityId)
+                .eq(Activity::getStatus, 2)
+                .set(Activity::getStatus, 1));
     }
 
     @Override

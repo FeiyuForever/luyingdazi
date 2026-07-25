@@ -15,6 +15,15 @@ export function getActivityList(pageNum, pageSize, city) {
   return get('/api/activity/list', { pageNum, pageSize, city })
 }
 
+/** 当前用户参加或发起的活动 */
+export function getMyActivities(type) {
+  return get('/api/activity/mine', { type })
+}
+
+export function isActivityJoined(activityId) {
+  return get(`/api/activity/joined/${activityId}`)
+}
+
 /** 报名 */
 export function joinActivity(activityId) {
   return post(`/api/activity/join/${activityId}`)

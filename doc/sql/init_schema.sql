@@ -123,6 +123,20 @@ CREATE TABLE `t_like` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='点赞表';
 
 -- -----------------------------------------------------------
+-- 动态收藏表
+-- -----------------------------------------------------------
+CREATE TABLE `t_favorite` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT,
+    `user_id` BIGINT NOT NULL,
+    `post_id` BIGINT NOT NULL,
+    `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_user_post` (`user_id`, `post_id`),
+    KEY `idx_user_created` (`user_id`, `created_at`),
+    KEY `idx_post` (`post_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='动态收藏表';
+
+-- -----------------------------------------------------------
 -- 7. 私信会话表
 -- -----------------------------------------------------------
 CREATE TABLE `t_chat_session` (

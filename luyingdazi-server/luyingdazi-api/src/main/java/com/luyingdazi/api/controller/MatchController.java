@@ -1,5 +1,6 @@
 package com.luyingdazi.api.controller;
 
+import com.luyingdazi.api.service.OssUrlService;
 import com.luyingdazi.common.result.Result;
 import com.luyingdazi.common.util.UserContext;
 import com.luyingdazi.model.query.NearbyQuery;
@@ -21,13 +22,15 @@ import java.util.List;
 public class MatchController {
 
     private final MatchService matchService;
+    private final OssUrlService ossUrlService;
 
     /**
      * 附近的人
      */
     @PostMapping("/nearby")
     public Result<List<UserVO>> getNearbyUsers(@RequestBody NearbyQuery query) {
-        return Result.success(matchService.getNearbyUsers(UserContext.getUserId(), query));
+        return Result.success(signAvatars(
+                matchService.getNearbyUsers(UserContext.getUserId(), query)));
     }
 
     /**
@@ -35,7 +38,8 @@ public class MatchController {
      */
     @GetMapping("/recommend")
     public Result<List<UserVO>> getRecommendUsers() {
-        return Result.success(matchService.getRecommendUsers(UserContext.getUserId()));
+        return Result.success(signAvatars(
+                matchService.getRecommendUsers(UserContext.getUserId())));
     }
 
     /**
@@ -49,6 +53,13 @@ public class MatchController {
             @RequestParam(required = false) String tag,
             @RequestParam(defaultValue = "1") int pageNum,
             @RequestParam(defaultValue = "20") int pageSize) {
-        return Result.success(matchService.searchUsers(keyword, city, gender, tag, pageNum, pageSize));
+        return Result.success(signAvatars(
+                matchService.searchUsers(keyword, city, gender, tag, pageNum, pageSize)));
+    }
+
+    private List<UserVO> signAvatars(List<UserVO> users) {
+        users.forEach(user -> user.setAvatar(
+                ossUrlService.toAccessibleUrl(user.getAvatar())));
+        return users;
     }
 }

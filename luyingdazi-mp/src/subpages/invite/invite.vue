@@ -29,10 +29,14 @@ export default {
   },
   onLoad() {
     const userInfo = uni.getStorageSync('userInfo')
-    this.inviteCode = userInfo?.inviteCode || 'LYD001'
+    this.inviteCode = userInfo?.inviteCode || ''
   },
   methods: {
     copyCode() {
+      if (!this.inviteCode) {
+        uni.showToast({ title: '邀请码加载失败，请重新登录', icon: 'none' })
+        return
+      }
       uni.setClipboardData({
         data: this.inviteCode,
         success: () => uni.showToast({ title: '已复制', icon: 'success' })

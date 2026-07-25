@@ -7,6 +7,8 @@
         <image class="msg-avatar" :src="msg.isMine ? myAvatar : targetAvatar" mode="aspectFill" />
         <view class="msg-bubble">
           <text class="msg-text">{{ msg.content }}</text>
+          <text class="msg-status" v-if="msg.pending">发送中...</text>
+          <text class="msg-status failed" v-if="msg.failed">发送失败</text>
         </view>
       </view>
     </scroll-view>
@@ -72,23 +74,30 @@ export default {
       this.inputText = ''
 
       // 先本地展示
-      this.messages.push({
-        id: Date.now(),
+      const tempMessage = {
+        id: `temp-${Date.now()}`,
         senderId: 'me',
         content,
         isMine: true,
+        pending: true,
+        failed: false,
         createdAt: new Date().toISOString()
-      })
+      }
+      this.messages.push(tempMessage)
       this.$nextTick(() => { this.scrollTop = 99999 })
 
       // 发送到后端
       try {
-        await sendMessage({
+        const messageId = await sendMessage({
           receiverId: this.targetId,
           msgType: 1,
           content
         })
+        tempMessage.id = messageId
+        tempMessage.pending = false
       } catch (e) {
+        tempMessage.pending = false
+        tempMessage.failed = true
         uni.showToast({ title: '发送失败', icon: 'none' })
       }
     }
@@ -107,6 +116,8 @@ export default {
 .msg-mine .msg-bubble { background: #2b9939; }
 .msg-mine .msg-text { color: #fff; }
 .msg-text { font-size: 28rpx; line-height: 1.5; word-break: break-all; }
+.msg-status { display: block; margin-top: 6rpx; font-size: 20rpx; color: rgba(255,255,255,0.75); }
+.msg-status.failed { color: #ffcccc; }
 
 .input-bar { display: flex; align-items: center; padding: 16rpx 20rpx; background: #fff; border-top: 1rpx solid #eee; padding-bottom: calc(16rpx + env(safe-area-inset-bottom)); }
 .msg-input { flex: 1; background: #f5f5f5; border-radius: 36rpx; padding: 16rpx 24rpx; font-size: 28rpx; }

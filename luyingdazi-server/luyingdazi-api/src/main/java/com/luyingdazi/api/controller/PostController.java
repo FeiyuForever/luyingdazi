@@ -3,6 +3,7 @@ package com.luyingdazi.api.controller;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.luyingdazi.common.constant.RedisKeyConstant;
+import com.luyingdazi.api.service.OssUrlService;
 import com.luyingdazi.common.result.PageResult;
 import com.luyingdazi.common.result.Result;
 import com.luyingdazi.common.util.UserContext;
@@ -31,6 +32,7 @@ public class PostController {
     private final PostService postService;
     private final UserMapper userMapper;
     private final StringRedisTemplate redisTemplate;
+    private final OssUrlService ossUrlService;
 
     /**
      * 发布动态
@@ -127,7 +129,7 @@ public class PostController {
         vo.setId(post.getId());
         vo.setUserId(post.getUserId());
         vo.setContent(post.getContent());
-        vo.setImages(post.getImages());
+        vo.setImages(ossUrlService.toAccessibleUrls(post.getImages()));
         vo.setLocationName(post.getLocationName());
         vo.setLikeCount(post.getLikeCount());
         vo.setCommentCount(post.getCommentCount());
@@ -135,7 +137,7 @@ public class PostController {
         vo.setCreatedAt(post.getCreatedAt());
         if (user != null) {
             vo.setNickname(user.getNickname());
-            vo.setAvatar(user.getAvatar());
+            vo.setAvatar(ossUrlService.toAccessibleUrl(user.getAvatar()));
         }
         // 点赞状态
         vo.setLiked(checkLiked(post.getId(), currentUserId));
@@ -147,7 +149,7 @@ public class PostController {
         vo.setId(post.getId());
         vo.setUserId(post.getUserId());
         vo.setContent(post.getContent());
-        vo.setImages(post.getImages());
+        vo.setImages(ossUrlService.toAccessibleUrls(post.getImages()));
         vo.setLocationName(post.getLocationName());
         vo.setLikeCount(post.getLikeCount());
         vo.setCommentCount(post.getCommentCount());
@@ -157,7 +159,7 @@ public class PostController {
         User user = userMap.get(post.getUserId());
         if (user != null) {
             vo.setNickname(user.getNickname());
-            vo.setAvatar(user.getAvatar());
+            vo.setAvatar(ossUrlService.toAccessibleUrl(user.getAvatar()));
         }
         vo.setLiked(checkLiked(post.getId(), currentUserId));
         return vo;

@@ -18,7 +18,7 @@ public interface UserMapper extends BaseMapper<User> {
      * 根据 openid 查询用户
      */
     @Select("SELECT id, openid, nickname, avatar, gender, city, bio, camping_years, " +
-            "member_level, member_expire_time, status, created_at " +
+            "member_level, member_expire_time, invite_code, status, created_at " +
             "FROM t_user WHERE openid = #{openid} AND status != 0")
     User selectByOpenid(@Param("openid") String openid);
 }

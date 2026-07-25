@@ -1,5 +1,6 @@
 package com.luyingdazi.api.controller;
 
+import com.luyingdazi.api.service.OssUrlService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.luyingdazi.common.exception.BizException;
 import com.luyingdazi.common.result.Result;
@@ -25,6 +26,7 @@ public class FollowController {
 
     private final FollowMapper followMapper;
     private final UserMapper userMapper;
+    private final OssUrlService ossUrlService;
 
     /**
      * 关注/取消关注（切换）
@@ -116,7 +118,7 @@ public class FollowController {
             java.util.Map<String, Object> map = new java.util.HashMap<>();
             map.put("id", u.getId());
             map.put("nickname", u.getNickname());
-            map.put("avatar", u.getAvatar());
+            map.put("avatar", ossUrlService.toAccessibleUrl(u.getAvatar()));
             map.put("bio", u.getBio());
             return map;
         }).collect(java.util.stream.Collectors.toList());

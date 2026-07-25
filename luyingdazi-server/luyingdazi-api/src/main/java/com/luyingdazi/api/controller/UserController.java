@@ -1,5 +1,6 @@
 package com.luyingdazi.api.controller;
 
+import com.luyingdazi.api.service.OssUrlService;
 import com.luyingdazi.common.result.Result;
 import com.luyingdazi.common.util.UserContext;
 import com.luyingdazi.model.dto.LocationDTO;
@@ -22,13 +23,16 @@ import org.springframework.web.bind.annotation.*;
 public class UserController {
 
     private final UserService userService;
+    private final OssUrlService ossUrlService;
 
     /**
      * 微信登录
      */
     @PostMapping("/wx-login")
     public Result<LoginVO> wxLogin(@RequestBody @Valid WxLoginDTO dto) {
-        return Result.success(userService.wxLogin(dto));
+        LoginVO login = userService.wxLogin(dto);
+        signAvatar(login.getUserInfo());
+        return Result.success(login);
     }
 
     /**
@@ -36,7 +40,9 @@ public class UserController {
      */
     @GetMapping("/info")
     public Result<UserVO> getUserInfo() {
-        return Result.success(userService.getUserInfo(UserContext.getUserId()));
+        UserVO user = userService.getUserInfo(UserContext.getUserId());
+        signAvatar(user);
+        return Result.success(user);
     }
 
     /**
@@ -44,7 +50,9 @@ public class UserController {
      */
     @GetMapping("/profile/{userId}")
     public Result<UserVO> getUserProfile(@PathVariable Long userId) {
-        return Result.success(userService.getUserProfile(userId, UserContext.getUserId()));
+        UserVO user = userService.getUserProfile(userId, UserContext.getUserId());
+        signAvatar(user);
+        return Result.success(user);
     }
 
     /**
@@ -63,5 +71,11 @@ public class UserController {
     public Result<Void> reportLocation(@RequestBody @Valid LocationDTO dto) {
         userService.reportLocation(UserContext.getUserId(), dto);
         return Result.success();
+    }
+
+    private void signAvatar(UserVO user) {
+        if (user != null) {
+            user.setAvatar(ossUrlService.toAccessibleUrl(user.getAvatar()));
+        }
     }
 }

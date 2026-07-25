@@ -49,4 +49,7 @@ public class UserVO {
 
     /** 会员等级 */
     private Integer memberLevel;
+
+    /** 用户专属邀请码 */
+    private String inviteCode;
 }

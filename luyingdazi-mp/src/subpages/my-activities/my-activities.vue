@@ -25,7 +25,7 @@
 </template>
 
 <script>
-import { get } from '@/utils/request'
+import { getMyActivities } from '@/api/activity'
 
 export default {
   data() {
@@ -38,13 +38,12 @@ export default {
   methods: {
     async loadData() {
       try {
-        // 用活动列表接口，后续可加"我的"筛选
-        const res = await get('/api/activity/list', { pageNum: 1, pageSize: 20 })
-        if (res && res.list) {
-          const userId = uni.getStorageSync('userInfo')?.id
-          this.createdList = res.list.filter(a => a.userId === userId)
-          this.joinedList = res.list // 简化：实际应查 activity_member 表
-        }
+        const [joined, created] = await Promise.all([
+          getMyActivities('joined'),
+          getMyActivities('created')
+        ])
+        this.joinedList = joined || []
+        this.createdList = created || []
       } catch (e) {}
     },
     goDetail(id) { uni.navigateTo({ url: `/subpages/activity-detail/activity-detail?id=${id}` }) },

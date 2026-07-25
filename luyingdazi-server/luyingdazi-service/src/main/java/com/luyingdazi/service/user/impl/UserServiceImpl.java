@@ -14,17 +14,24 @@ import com.luyingdazi.common.result.ResultCode;
 import com.luyingdazi.model.dto.LocationDTO;
 import com.luyingdazi.model.dto.WxLoginDTO;
 import com.luyingdazi.model.entity.User;
+import com.luyingdazi.model.entity.Follow;
+import com.luyingdazi.model.entity.UserTag;
 import com.luyingdazi.model.vo.LoginVO;
 import com.luyingdazi.model.vo.UserVO;
+import com.luyingdazi.mapper.FollowMapper;
 import com.luyingdazi.mapper.UserMapper;
+import com.luyingdazi.mapper.UserTagMapper;
 import com.luyingdazi.service.user.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -38,6 +45,8 @@ import java.util.concurrent.TimeUnit;
 public class UserServiceImpl implements UserService {
 
     private final UserMapper userMapper;
+    private final FollowMapper followMapper;
+    private final UserTagMapper userTagMapper;
     private final StringRedisTemplate redisTemplate;
 
     @Value("${wx.miniapp.app-id}")
@@ -113,6 +122,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void updateProfile(Long userId, UserVO vo) {
         LambdaUpdateWrapper<User> wrapper = new LambdaUpdateWrapper<>();
         wrapper.eq(User::getId, userId);
@@ -120,16 +130,16 @@ public class UserServiceImpl implements UserService {
         if (StrUtil.isNotBlank(vo.getNickname())) {
             wrapper.set(User::getNickname, vo.getNickname());
         }
-        if (StrUtil.isNotBlank(vo.getAvatar())) {
+        if (vo.getAvatar() != null) {
             wrapper.set(User::getAvatar, vo.getAvatar());
         }
         if (vo.getGender() != null) {
             wrapper.set(User::getGender, vo.getGender());
         }
-        if (StrUtil.isNotBlank(vo.getCity())) {
+        if (vo.getCity() != null) {
             wrapper.set(User::getCity, vo.getCity());
         }
-        if (StrUtil.isNotBlank(vo.getBio())) {
+        if (vo.getBio() != null) {
             wrapper.set(User::getBio, vo.getBio());
         }
         if (vo.getCampingYears() != null) {
@@ -137,6 +147,21 @@ public class UserServiceImpl implements UserService {
         }
 
         userMapper.update(null, wrapper);
+
+        if (vo.getTags() != null) {
+            userTagMapper.delete(new LambdaQueryWrapper<UserTag>()
+                    .eq(UserTag::getUserId, userId));
+            new LinkedHashSet<>(vo.getTags()).stream()
+                    .filter(StrUtil::isNotBlank)
+                    .limit(5)
+                    .forEach(tag -> {
+                        UserTag userTag = new UserTag();
+                        userTag.setUserId(userId);
+                        userTag.setTagName(tag);
+                        userTag.setCreatedAt(LocalDateTime.now());
+                        userTagMapper.insert(userTag);
+                    });
+        }
 
         // 清除缓存
         redisTemplate.delete(RedisKeyConstant.USER_INFO + userId);
@@ -172,10 +197,12 @@ public class UserServiceImpl implements UserService {
 
         // 查是否已关注
         if (currentUserId != null && !currentUserId.equals(targetUserId)) {
-            Long count = userMapper.selectCount(new LambdaQueryWrapper<User>()
-                    // 这里实际应该查 t_follow 表，暂时简化
-            );
-            vo.setFollowed(false); // TODO: 接入 FollowMapper 后完善
+            Long count = followMapper.selectCount(new LambdaQueryWrapper<Follow>()
+                    .eq(Follow::getUserId, currentUserId)
+                    .eq(Follow::getFollowUserId, targetUserId));
+            vo.setFollowed(count > 0);
+        } else {
+            vo.setFollowed(false);
         }
 
         return vo;
@@ -226,6 +253,12 @@ public class UserServiceImpl implements UserService {
         vo.setBio(user.getBio());
         vo.setCampingYears(user.getCampingYears());
         vo.setMemberLevel(user.getMemberLevel());
+        vo.setInviteCode(user.getInviteCode());
+        List<String> tags = userTagMapper.selectList(new LambdaQueryWrapper<UserTag>()
+                        .eq(UserTag::getUserId, user.getId())
+                        .orderByAsc(UserTag::getId))
+                .stream().map(UserTag::getTagName).toList();
+        vo.setTags(tags);
         return vo;
     }
 

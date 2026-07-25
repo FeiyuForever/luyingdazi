@@ -3,6 +3,8 @@ package com.luyingdazi.service.activity;
 import com.luyingdazi.common.result.PageResult;
 import com.luyingdazi.model.entity.Activity;
 
+import java.util.List;
+
 /**
  * 活动服务接口
  *
@@ -36,6 +38,12 @@ public interface ActivityService {
      * @return 分页结果
      */
     PageResult<Activity> getActivityList(int pageNum, int pageSize, String city);
+
+    /** 获取当前用户参加或发起的活动 */
+    List<Activity> getUserActivities(Long userId, boolean created);
+
+    /** 当前用户是否已参加活动 */
+    boolean isJoined(Long userId, Long activityId);
 
     /**
      * 报名参加活动

@@ -9,18 +9,24 @@
       <view class="info-row">💰 {{ activity.feeDesc }}</view>
       <view class="info-row" v-if="activity.requirement">📋 {{ activity.requirement }}</view>
       <text class="desc">{{ activity.description }}</text>
-      <view class="btn-primary join-btn" @click="handleJoin" v-if="activity.status === 1">报名参加</view>
+      <view class="btn-outline join-btn" v-if="isCreator">我发起的活动</view>
+      <view class="btn-outline join-btn" @click="handleQuit" v-else-if="joined">取消报名</view>
+      <view class="btn-primary join-btn" @click="handleJoin" v-else-if="activity.status === 1">报名参加</view>
       <view class="btn-outline join-btn" v-else>{{ statusText }}</view>
     </view>
   </view>
 </template>
 
 <script>
-import { getActivityDetail, joinActivity } from '@/api/activity'
+import { getActivityDetail, isActivityJoined, joinActivity, quitActivity } from '@/api/activity'
 
 export default {
-  data() { return { activity: null } },
+  data() { return { activity: null, joined: false } },
   computed: {
+    isCreator() {
+      const userId = uni.getStorageSync('userInfo')?.id
+      return Boolean(this.activity && userId && this.activity.userId === userId)
+    },
     statusText() {
       const m = { 2: '已满员', 3: '进行中', 4: '已结束', 0: '已取消' }
       return m[this.activity?.status] || ''
@@ -28,12 +34,28 @@ export default {
   },
   onLoad(options) { this.loadDetail(options.id) },
   methods: {
-    async loadDetail(id) { this.activity = await getActivityDetail(id) },
+    async loadDetail(id) {
+      this.activity = await getActivityDetail(id)
+      try {
+        this.joined = await isActivityJoined(id)
+      } catch (e) {
+        this.joined = false
+      }
+    },
     async handleJoin() {
       try {
         await joinActivity(this.activity.id)
         uni.showToast({ title: '报名成功！', icon: 'success' })
         this.activity.currentMembers++
+        this.joined = true
+      } catch (e) {}
+    },
+    async handleQuit() {
+      try {
+        await quitActivity(this.activity.id)
+        this.activity.currentMembers = Math.max(0, this.activity.currentMembers - 1)
+        this.joined = false
+        uni.showToast({ title: '已取消报名', icon: 'success' })
       } catch (e) {}
     }
   }

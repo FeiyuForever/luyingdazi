@@ -1,5 +1,6 @@
 package com.luyingdazi.api.controller;
 
+import com.luyingdazi.api.service.OssUrlService;
 import com.luyingdazi.common.result.PageResult;
 import com.luyingdazi.common.result.Result;
 import com.luyingdazi.common.util.UserContext;
@@ -21,13 +22,21 @@ import java.util.Map;
 public class ChatController {
 
     private final ChatService chatService;
+    private final OssUrlService ossUrlService;
 
     /**
      * 获取会话列表
      */
     @GetMapping("/sessions")
     public Result<List<Map<String, Object>>> getSessions() {
-        return Result.success(chatService.getSessionList(UserContext.getUserId()));
+        List<Map<String, Object>> sessions = chatService.getSessionList(UserContext.getUserId());
+        sessions.forEach(session -> {
+            Object avatar = session.get("targetAvatar");
+            if (avatar instanceof String avatarUrl) {
+                session.put("targetAvatar", ossUrlService.toAccessibleUrl(avatarUrl));
+            }
+        });
+        return Result.success(sessions);
     }
 
     /**
