@@ -68,8 +68,11 @@ public class OssUrlService {
                                 endpoint,
                                 ossConfig.getAccessKeyId(),
                                 ossConfig.getAccessKeySecret()));
-        return signingClient.generatePresignedUrl(
+        String signedUrl = signingClient.generatePresignedUrl(
                 ossConfig.getBucketName(), objectKey, expiration).toString();
+        return signedUrl.startsWith("http://")
+                ? "https://" + signedUrl.substring("http://".length())
+                : signedUrl;
     }
 
     public List<String> toAccessibleUrls(List<String> urls) {
