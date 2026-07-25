@@ -30,6 +30,7 @@ public interface ActivityMapper extends BaseMapper<Activity> {
             INNER JOIN t_activity_member m ON m.activity_id = a.id
             WHERE m.user_id = #{userId}
               AND m.status = 1
+              AND m.role = 2
             ORDER BY m.joined_at DESC
             """)
     List<Activity> selectJoinedByUserId(@Param("userId") Long userId);
